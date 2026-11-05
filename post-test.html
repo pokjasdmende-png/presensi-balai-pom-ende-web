@@ -1,0 +1,41 @@
+
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <title>Uji API POST Presensi</title>
+</head>
+<body>
+  <h2>Uji Komunikasi API Presensi</h2>
+  <button onclick="ujiPOST()">Uji API POST</button>
+  <pre id="hasil">Belum diuji.</pre>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyiFQ8pOCFSP5SbzrFjVWWf6UCEtUgH-UdhyXPg3I-UvX-2N1fJUp6uk9V44D8hdvn7/exec';
+
+    async function ujiPOST() {
+      const hasil = document.getElementById('hasil');
+      hasil.textContent = 'Menghubungi server...';
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'text/plain;charset=UTF-8'
+          },
+          body: JSON.stringify({
+            functionName: 'getMyAccess',
+            args: ['TOKEN-UJI-TIDAK-VALID']
+          })
+        });
+
+        const raw = await response.text();
+        hasil.textContent = raw;
+      } catch (error) {
+        hasil.textContent = 'GAGAL: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
