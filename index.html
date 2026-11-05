@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uji Koneksi Presensi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 20px;
+      text-align: center;
+    }
+    #hasil {
+      margin-top: 25px;
+      padding: 20px;
+      background: #f1f1f1;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <h2>Uji Koneksi Presensi</h2>
+  <p>Pengujian komunikasi GitHub Pages dengan Apps Script.</p>
+  <div id="hasil">Sedang menghubungi server...</div>
+
+  <script>
+    const API_URL =
+      'https://script.google.com/macros/s/AKfycbyiFQ8pOCFSP5SbzrFjVWWf6UCEtUgH-UdhyXPg3I-UvX-2N1fJUp6uk9V44D8hdvn7/exec';
+
+    fetch(API_URL + '?api=test')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        document.getElementById('hasil').textContent =
+          'BERHASIL\n\n' + JSON.stringify(data, null, 2);
+      })
+      .catch(error => {
+        document.getElementById('hasil').textContent =
+          'GAGAL MENGHUBUNGI API\n\n' + error.message;
+      });
+  </script>
+</body>
+</html>
