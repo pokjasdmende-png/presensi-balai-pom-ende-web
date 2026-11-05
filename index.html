@@ -449,11 +449,14 @@ document.querySelectorAll('.nav-btn').forEach(function(btn) {
 });
   // Pulihkan kartu sambutan ke kondisi awal sebelum login.
   const globalWelcomeCard = document.getElementById('globalWelcomeCard');
-  if (globalWelcomeCard) globalWelcomeCard.style.display = '';
+  if (globalWelcomeCard) {
+    globalWelcomeCard.style.display = '';
+    globalWelcomeCard.classList.remove('hidden');
+  }
 
-  // Samakan kembali teks sambutan dengan kondisi saat halaman pertama dibuka.
+  // Pulihkan tampilan sambutan persis seperti halaman awal sebelum login.
   document.getElementById('welcomeTitle').textContent = 'Selamat Datang';
-  document.getElementById('welcomeRole').textContent = 'Memeriksa sesi…';
+  document.getElementById('welcomeRole').textContent = '';
   document.getElementById('welcomeEmail').textContent = '';
   document.getElementById('adminName').textContent = 'Admin';
   document.getElementById('status').classList.add('hidden');
@@ -779,45 +782,50 @@ function loadMonthlyBreakViolations() {
 function navigate(page) {
   if (!access) return;
 
-  // Batasi akses menu Laporan hanya untuk Admin
+  // Batasi akses menu Laporan hanya untuk Admin.
   if (page === 'reports' && !access.isAdmin) {
     page = access.isOfficer ? 'dashboard' : 'attendance';
   }
 
-  // Tampilkan menu sesuai hak akses
   document.getElementById('navReports')
     ?.classList.toggle('hidden', !access.isAdmin);
 
-  document.querySelectorAll('.nav-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.page === page);
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === page);
   });
+
+  // Satu sumber kendali untuk halaman Admin: bersihkan semua status lama,
+  // lalu aktifkan hanya halaman yang dipilih. Ini mencegah kelas hidden
+  // tertinggal setelah logout dan login kembali.
+  const adminPanel = document.getElementById('adminPanel');
+  if (access.isAdmin && adminPanel) {
+    adminPanel.classList.remove('hidden');
+    adminPanel.querySelectorAll('.admin-page-card').forEach(card => {
+      card.classList.remove('hidden', 'page-active');
+    });
+
+    const dashboard = document.getElementById('adminDashboardSection');
+    const form = document.getElementById('employeeFormCard');
+    const list = document.getElementById('employeeListCard');
+
+    if (dashboard) dashboard.classList.toggle('page-active', page === 'dashboard');
+    [form, list].forEach(card => {
+      if (!card) return;
+      card.classList.toggle('page-active', page === 'employees');
+      card.classList.toggle('hidden', page !== 'employees');
+    });
+  }
 
   document.getElementById('allEmployeesOutSection')
     ?.classList.toggle('hidden', page !== 'out');
-
   if (page === 'out') loadTodayExitBoard();
-
-  document.getElementById('adminDashboardSection')
-    ?.classList.toggle('page-active', page === 'dashboard' && access.isAdmin);
-
-  // Panel Data Pegawai harus dibuka kembali setelah proses login.
-  // showLogin() menyembunyikannya saat keluar; navigasi sebelumnya
-  // hanya mengatur page-active sehingga kelas hidden tertinggal.
-  const showEmployeePage = page === 'employees' && access.isAdmin;
-  ['employeeFormCard', 'employeeListCard'].forEach(id => {
-    const panel = document.getElementById(id);
-    if (panel) {
-      panel.classList.toggle('hidden', !showEmployeePage);
-      panel.classList.toggle('page-active', showEmployeePage);
-    }
-  });
 
   document.getElementById('officerApprovalsSection')
     ?.classList.toggle('hidden', !(page === 'approvals' && access.isOfficer));
 
   document.getElementById('officerMonitoringSection')
     ?.classList.toggle('hidden', !(access.isOfficer &&
-      (page === 'monitoring' || page === 'dashboard' && !access.isAdmin && !access.isEmployee)));
+      (page === 'monitoring' || (page === 'dashboard' && !access.isAdmin && !access.isEmployee))));
 
   document.getElementById('reportPanel')
     ?.classList.toggle('hidden', !(page === 'reports' && access.isAdmin));
@@ -825,16 +833,8 @@ function navigate(page) {
   document.getElementById('employeePanel')
     ?.classList.toggle('hidden', !(page === 'attendance' && access.isEmployee));
 
-  if (access.isAdmin) {
-    document.getElementById('adminPanel').classList.remove('hidden');
-    document.getElementById('employeeFormCard')
-      .classList.toggle('page-active', page === 'employees');
-    document.getElementById('employeeListCard')
-      .classList.toggle('page-active', page === 'employees');
-  }
-
   if (access.isOfficer) {
-    document.getElementById('officerPanel').classList.remove('hidden');
+    document.getElementById('officerPanel')?.classList.remove('hidden');
   }
 
   if (access.isAdmin && page === 'dashboard') loadDashboard();
@@ -849,7 +849,6 @@ function navigate(page) {
 
   if (page === 'attendance' && access.isEmployee) loadAttendanceState();
 }
-
 
 function setupNavigation(r){['navEmployees','navApprovals','navMonitoring','navReports','navAttendance','navOut'].forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById('navOut').classList.remove('hidden');if(r.isAdmin){document.getElementById('navEmployees').classList.remove('hidden');document.getElementById('navReports').classList.remove('hidden');}if(r.isOfficer){document.getElementById('navApprovals').classList.remove('hidden');document.getElementById('navMonitoring').classList.remove('hidden');document.getElementById('navReports').classList.remove('hidden');}if(r.isEmployee)document.getElementById('navAttendance').classList.remove('hidden');navigate(r.isEmployee?'attendance':r.isAdmin?'dashboard':'approvals');}
 
