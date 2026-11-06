@@ -699,10 +699,32 @@ function checkAccess() {
     try { sessionToken = localStorage.getItem(SESSION_STORAGE_KEY); } catch (e) { sessionToken = null; }
   }
   if (!sessionToken) { showLogin(); return; }
+
+  // Token yang tersimpan tetap dipakai saat refresh atau browser dibuka kembali.
+  // Sembunyikan form OTP selama server sedang memulihkan sesi.
+  document.getElementById('loginPanel').classList.add('hidden');
+  document.getElementById('welcomeRole').textContent = 'Memeriksa sesi tersimpan…';
+  document.getElementById('welcomeEmail').textContent = '';
+
   apiRun.withSuccessHandler(r => {
-    if (!r || !r.ok) { sessionToken = null; access = null; try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) {} showLogin(); msg('loginStatus', (r && r.message) || 'Sesi berakhir. Login kembali.', true); return; }
-    access = r; applyAccess(r);
-  }).withFailureHandler(e => { sessionToken = null; access = null; try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (ex) {} showLogin(); msg('loginStatus', errText(e), true); }).getMyAccess(sessionToken);
+    if (!r || !r.ok) {
+      // Hapus token hanya jika server secara jelas menyatakan sesi tidak valid/kedaluwarsa.
+      sessionToken = null; access = null;
+      try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (e) {}
+      showLogin();
+      msg('loginStatus', (r && r.message) || 'Sesi berakhir. Silakan login kembali dengan OTP.', true);
+      return;
+    }
+    access = r;
+    document.getElementById('status').classList.add('hidden');
+    applyAccess(r);
+  }).withFailureHandler(e => {
+    // Gangguan jaringan/server sementara bukan berarti token kedaluwarsa.
+    // Pertahankan token agar pengguna tidak perlu meminta OTP ulang.
+    access = null;
+    document.getElementById('loginPanel').classList.add('hidden');
+    msg('status', 'Sesi login masih tersimpan. Server belum dapat dihubungi untuk memeriksa sesi. Periksa koneksi internet, lalu tekan tombol “Periksa sesi”. Anda tidak perlu meminta OTP lagi.', true);
+  }).getMyAccess(sessionToken);
 }
 function applyAccess(r) {
   setupNavigation(r);
